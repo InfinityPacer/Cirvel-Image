@@ -116,7 +116,7 @@ jobs:
       - uses: docker/setup-buildx-action@v4
 
       - name: Download amd64 runtime artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: cirvel-runtime-amd64
           path: .release/incoming/amd64
@@ -125,7 +125,7 @@ jobs:
           github-token: ${{ secrets.CIRVEL_SOURCE_ARTIFACT_TOKEN }}
 
       - name: Download arm64 runtime artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: cirvel-runtime-arm64
           path: .release/incoming/arm64
@@ -134,7 +134,7 @@ jobs:
           github-token: ${{ secrets.CIRVEL_SOURCE_ARTIFACT_TOKEN }}
 
       - name: Download runtime manifest
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: cirvel-runtime-manifest
           path: .release/manifest
@@ -209,6 +209,8 @@ jobs:
             CIRVEL_PROXY_SHA256_ARM64=${{ steps.validate.outputs.proxy_sha256_arm64 }}
             CIRVEL_SHIM_SHA256_AMD64=${{ steps.validate.outputs.shim_sha256_amd64 }}
             CIRVEL_SHIM_SHA256_ARM64=${{ steps.validate.outputs.shim_sha256_arm64 }}
+            CIRVEL_FFPROBE_SHA256_AMD64=${{ steps.validate.outputs.ffprobe_sha256_amd64 }}
+            CIRVEL_FFPROBE_SHA256_ARM64=${{ steps.validate.outputs.ffprobe_sha256_arm64 }}
           tags: |
             ${{ env.GHCR_IMAGE }}:${{ steps.validate.outputs.release_tag }}
             ${{ env.GHCR_IMAGE }}:latest

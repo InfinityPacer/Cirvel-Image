@@ -21,13 +21,14 @@ declare -A artifact_files=(
   [runtime]=cirvel
   [proxy]=cirvel-proxy
   [shim]=cirvel-bind.so
+  [ffprobe]=ffprobe
 )
 for arch in amd64 arm64; do
-  for name in runtime proxy shim; do
+  for name in runtime proxy shim ffprobe; do
     printf '%s %s\n' "${arch}" "${name}" > "${work}/payload/${arch}/${artifact_files[${name}]}"
   done
   tar -czf "${work}/incoming/${arch}/cirvel-runtime-${arch}.tar.gz" \
-    -C "${work}/payload/${arch}" cirvel cirvel-proxy cirvel-bind.so
+    -C "${work}/payload/${arch}" cirvel cirvel-proxy cirvel-bind.so ffprobe
 done
 
 sha_of() { sha256sum "${work}/payload/${1}/${artifact_files[${2}]}" | awk '{print $1}'; }
@@ -36,7 +37,7 @@ size_of() { wc -c < "${work}/payload/${1}/${artifact_files[${2}]}" | tr -d '[:sp
 files_json() {
   local arch=$1 name
   local entries=()
-  for name in runtime proxy shim; do
+  for name in runtime proxy shim ffprobe; do
     entries+=("$(jq -n --arg name "${name}" \
       --arg path "runtime/${arch}/${artifact_files[${name}]}" \
       --arg sha256 "$(sha_of "${arch}" "${name}")" \
@@ -59,7 +60,7 @@ jq -n \
   --arg release_tag "${release_tag}" --arg plex_version "${plex_version}" \
   --argjson amd_files "${amd_files}" --argjson arm_files "${arm_files}" \
   --arg amd_base_digest "${amd_base_digest}" --arg arm_base_digest "${arm_base_digest}" \
-  '{schema:3,runtime:{name:"cirvel",version:"0.1.0",binary:"cirvel",commands:{version:"cirvel version",install:"cirvel install",verify:"cirvel verify",healthcheck:"cirvel healthcheck"},install_paths:{runtime:"/usr/local/bin/cirvel",proxy:"/usr/local/bin/cirvel-proxy",shim:"/usr/local/lib/cirvel/cirvel-bind.so"}},source:{repository:"example-owner/example-source",run_id:123,commit:$source_commit,ref:"refs/heads/main",workflow_path:".github/workflows/release.yml"},release:{tag:$release_tag,runtime_version:"0.1.0",plex_version:$plex_version,base_version:$base_tag},base:{image:"lscr.io/linuxserver/plex",tag:$base_tag,plex_version:$plex_version,reference:$base_reference,digest:$base_digest,platforms:{"linux/amd64":$amd_base_digest,"linux/arm64":$arm_base_digest}},artifacts:{"linux/amd64":{artifact:"cirvel-runtime-amd64",archive:"cirvel-runtime-amd64.tar.gz",files:$amd_files},"linux/arm64":{artifact:"cirvel-runtime-arm64",archive:"cirvel-runtime-arm64.tar.gz",files:$arm_files}}}' \
+  '{schema:3,runtime:{name:"cirvel",version:"0.1.0",binary:"cirvel",commands:{version:"cirvel version",install:"cirvel install",verify:"cirvel verify",healthcheck:"cirvel healthcheck"},install_paths:{runtime:"/usr/local/bin/cirvel",proxy:"/usr/local/bin/cirvel-proxy",shim:"/usr/local/lib/cirvel/cirvel-bind.so",ffprobe:"/opt/cirvel/ffmpeg/bin/ffprobe"}},source:{repository:"example-owner/example-source",run_id:123,commit:$source_commit,ref:"refs/heads/main",workflow_path:".github/workflows/release.yml"},release:{tag:$release_tag,runtime_version:"0.1.0",plex_version:$plex_version,base_version:$base_tag},base:{image:"lscr.io/linuxserver/plex",tag:$base_tag,plex_version:$plex_version,reference:$base_reference,digest:$base_digest,platforms:{"linux/amd64":$amd_base_digest,"linux/arm64":$arm_base_digest}},artifacts:{"linux/amd64":{artifact:"cirvel-runtime-amd64",archive:"cirvel-runtime-amd64.tar.gz",files:$amd_files},"linux/arm64":{artifact:"cirvel-runtime-arm64",archive:"cirvel-runtime-arm64.tar.gz",files:$arm_files}}}' \
   > "${work}/manifest.json"
 
 cat > "${work}/bin/docker" <<'EOF'

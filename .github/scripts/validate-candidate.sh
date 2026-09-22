@@ -32,6 +32,7 @@ runtime_version=$(jq -er '.runtime.version' "${manifest}")
 runtime_install_path=$(jq -er '.runtime.install_paths.runtime' "${manifest}")
 proxy_install_path=$(jq -er '.runtime.install_paths.proxy' "${manifest}")
 shim_install_path=$(jq -er '.runtime.install_paths.shim' "${manifest}")
+ffprobe_install_path=$(jq -er '.runtime.install_paths.ffprobe' "${manifest}")
 base_image=$(jq -er '.base.image' "${manifest}")
 base_reference=$(jq -er '.base.reference' "${manifest}")
 base_digest=$(jq -er '.base.digest' "${manifest}")
@@ -58,6 +59,7 @@ test "${runtime_version}" = "${expected_runtime_version}"
 test "${runtime_install_path}" = "/usr/local/bin/cirvel"
 test "${proxy_install_path}" = "/usr/local/bin/cirvel-proxy"
 test "${shim_install_path}" = "/usr/local/lib/cirvel/cirvel-bind.so"
+test "${ffprobe_install_path}" = "/opt/cirvel/ffmpeg/bin/ffprobe"
 test "${release_runtime_version}" = "${runtime_version}"
 [[ "${base_tag}" =~ ^[A-Za-z0-9_.-]+$ ]]
 [[ "${release_plex_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
@@ -87,11 +89,12 @@ for platform in linux/amd64 linux/arm64; do
   test "${artifact}" = "${expected_artifact}"
   archive=$(jq -er --arg platform "${platform}" '.artifacts[$platform].archive' "${manifest}")
   test "${archive}" = "${expected_artifact}.tar.gz"
-  for name in runtime proxy shim; do
+  for name in runtime proxy shim ffprobe; do
     case "${name}" in
       runtime) expected_file=cirvel ;;
       proxy) expected_file=cirvel-proxy ;;
       shim) expected_file=cirvel-bind.so ;;
+      ffprobe) expected_file=ffprobe ;;
     esac
     artifact_path=$(jq -er --arg platform "${platform}" --arg name "${name}" '.artifacts[$platform].files[$name].path' "${manifest}")
     test "${artifact_path}" = "runtime/${platform##*/}/${expected_file}"
@@ -105,17 +108,19 @@ for arch in amd64 arm64; do
   archive="${incoming_root}/${arch}/cirvel-runtime-${arch}.tar.gz"
   test -f "${archive}"
   mapfile -t entries < <(tar -tzf "${archive}" | LC_ALL=C sort)
-  test "${#entries[@]}" -eq 3
+  test "${#entries[@]}" -eq 4
   test "${entries[0]}" = "cirvel"
   test "${entries[1]}" = "cirvel-bind.so"
   test "${entries[2]}" = "cirvel-proxy"
+  test "${entries[3]}" = "ffprobe"
   tar -xzf "${archive}" -C "${runtime_root}/${arch}"
 
-  for name in runtime proxy shim; do
+  for name in runtime proxy shim ffprobe; do
     case "${name}" in
       runtime) file=cirvel ;;
       proxy) file=cirvel-proxy ;;
       shim) file=cirvel-bind.so ;;
+      ffprobe) file=ffprobe ;;
     esac
     binary="${runtime_root}/${arch}/${file}"
     test -f "${binary}"
