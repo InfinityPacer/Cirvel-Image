@@ -1,0 +1,233 @@
+name: Release Cirvel image
+
+on:
+  repository_dispatch:
+    types: [cirvel-release]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Source workflow run ID containing the runtime artifacts
+        required: true
+        type: string
+      runtime_version:
+        description: Cirvel version to package
+        required: true
+        type: string
+      base_image:
+        description: LinuxServer Plex image reference used for this build
+        required: true
+        type: string
+      overwrite:
+        description: Republish over an already published tag
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: cirvel-image-release
+  cancel-in-progress: false
+
+env:
+  SOURCE_REPOSITORY: ${{ vars.CIRVEL_SOURCE_REPOSITORY }}
+  GHCR_IMAGE: ghcr.io/infinitypacer/cirvel
+  DOCKERHUB_IMAGE: infinitypacer/cirvel
+
+jobs:
+  inputs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      source_repository: ${{ steps.resolve.outputs.source_repository }}
+      source_run_id: ${{ steps.resolve.outputs.source_run_id }}
+      runtime_version: ${{ steps.resolve.outputs.runtime_version }}
+      base_image: ${{ steps.resolve.outputs.base_image }}
+      source_commit: ${{ steps.source.outputs.head_sha }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Resolve and validate inputs
+        id: resolve
+        shell: bash
+        env:
+          EVENT_SOURCE_REPOSITORY: ${{ github.event.client_payload.source_repository }}
+          EVENT_SOURCE_RUN_ID: ${{ github.event.client_payload.source_run_id }}
+          EVENT_RUNTIME_VERSION: ${{ github.event.client_payload.runtime_version }}
+          EVENT_BASE_IMAGE: ${{ github.event.client_payload.base_image }}
+          MANUAL_SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          MANUAL_RUNTIME_VERSION: ${{ inputs.runtime_version }}
+          MANUAL_BASE_IMAGE: ${{ inputs.base_image }}
+        run: |
+          set -euo pipefail
+
+          test -n "${SOURCE_REPOSITORY}" || {
+            echo "repository variable CIRVEL_SOURCE_REPOSITORY is not configured" >&2
+            exit 1
+          }
+          source_repository="${EVENT_SOURCE_REPOSITORY:-${SOURCE_REPOSITORY}}"
+          source_run_id="${EVENT_SOURCE_RUN_ID:-${MANUAL_SOURCE_RUN_ID}}"
+          runtime_version="${EVENT_RUNTIME_VERSION:-${MANUAL_RUNTIME_VERSION}}"
+          base_image="${EVENT_BASE_IMAGE:-${MANUAL_BASE_IMAGE}}"
+
+          [[ "${source_repository,,}" == "${SOURCE_REPOSITORY,,}" ]] || {
+            echo "source repository is not the approved source repository" >&2
+            exit 1
+          }
+          [[ "${source_run_id}" =~ ^[1-9][0-9]*$ ]] || {
+            echo "source run ID must be a positive integer" >&2
+            exit 1
+          }
+          [[ "${runtime_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "runtime version must be a stable semantic version" >&2
+            exit 1
+          }
+          [[ "${base_image}" =~ ^lscr\.io/linuxserver/plex:[^@[:space:]]+@sha256:[0-9a-f]{64}$ ]] || {
+            echo "base image must be a LinuxServer Plex reference pinned by index digest" >&2
+            exit 1
+          }
+
+          {
+            printf 'source_repository=%s\n' "${SOURCE_REPOSITORY}"
+            printf 'source_run_id=%s\n' "${source_run_id}"
+            printf 'runtime_version=%s\n' "${runtime_version}"
+            printf 'base_image=%s\n' "${base_image}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Verify the private source workflow run
+        id: source
+        env:
+          SOURCE_REPOSITORY: ${{ steps.resolve.outputs.source_repository }}
+          SOURCE_RUN_ID: ${{ steps.resolve.outputs.source_run_id }}
+          SOURCE_ARTIFACT_TOKEN: ${{ secrets.CIRVEL_SOURCE_ARTIFACT_TOKEN }}
+          POLL_TIMEOUT_SECONDS: '3600'
+          POLL_INTERVAL_SECONDS: '15'
+        run: ./.github/scripts/validate-source-run.sh "${SOURCE_RUN_ID}" "${GITHUB_OUTPUT}"
+
+  release:
+    needs: inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Download amd64 runtime artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: cirvel-runtime-amd64
+          path: .release/incoming/amd64
+          repository: ${{ needs.inputs.outputs.source_repository }}
+          run-id: ${{ needs.inputs.outputs.source_run_id }}
+          github-token: ${{ secrets.CIRVEL_SOURCE_ARTIFACT_TOKEN }}
+
+      - name: Download arm64 runtime artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: cirvel-runtime-arm64
+          path: .release/incoming/arm64
+          repository: ${{ needs.inputs.outputs.source_repository }}
+          run-id: ${{ needs.inputs.outputs.source_run_id }}
+          github-token: ${{ secrets.CIRVEL_SOURCE_ARTIFACT_TOKEN }}
+
+      - name: Download runtime manifest
+        uses: actions/download-artifact@v5
+        with:
+          name: cirvel-runtime-manifest
+          path: .release/manifest
+          repository: ${{ needs.inputs.outputs.source_repository }}
+          run-id: ${{ needs.inputs.outputs.source_run_id }}
+          github-token: ${{ secrets.CIRVEL_SOURCE_ARTIFACT_TOKEN }}
+
+      - name: Validate runtime artifacts
+        id: validate
+        env:
+          EXPECTED_SOURCE_REPOSITORY: ${{ needs.inputs.outputs.source_repository }}
+          EXPECTED_SOURCE_RUN_ID: ${{ needs.inputs.outputs.source_run_id }}
+          EXPECTED_SOURCE_COMMIT: ${{ needs.inputs.outputs.source_commit }}
+          EXPECTED_RUNTIME_VERSION: ${{ needs.inputs.outputs.runtime_version }}
+          EXPECTED_BASE_IMAGE: ${{ needs.inputs.outputs.base_image }}
+        run: |
+          set -euo pipefail
+          ./.github/scripts/validate-candidate.sh \
+            .release/manifest/manifest.json \
+            "${EXPECTED_SOURCE_REPOSITORY}" \
+            "${EXPECTED_SOURCE_RUN_ID}" \
+            "${EXPECTED_SOURCE_COMMIT}" \
+            "${EXPECTED_RUNTIME_VERSION}" \
+            "${EXPECTED_BASE_IMAGE}" \
+            .release/incoming \
+            runtime
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Refuse to overwrite a published tag
+        if: ${{ !inputs.overwrite }}
+        env:
+          RELEASE_TAG: ${{ steps.validate.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          for image in "${GHCR_IMAGE}" "${DOCKERHUB_IMAGE}"; do
+            if docker manifest inspect "${image}:${RELEASE_TAG}" >/dev/null 2>&1; then
+              echo "${image}:${RELEASE_TAG} is already published" >&2
+              echo "bump VERSION in the source repository, or re-run this workflow with overwrite enabled" >&2
+              exit 1
+            fi
+          done
+
+      - name: Build and publish version and latest tags
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          sbom: false
+          build-args: |
+            PLEX_BASE_IMAGE=${{ needs.inputs.outputs.base_image }}
+            CIRVEL_VERSION=${{ needs.inputs.outputs.runtime_version }}
+            CIRVEL_SOURCE_REVISION=${{ steps.validate.outputs.source_commit }}
+            CIRVEL_RELEASE_TAG=${{ steps.validate.outputs.release_tag }}
+            PLEX_UPSTREAM_VERSION=${{ steps.validate.outputs.plex_version }}
+            CIRVEL_RUNTIME_SHA256_AMD64=${{ steps.validate.outputs.runtime_sha256_amd64 }}
+            CIRVEL_RUNTIME_SHA256_ARM64=${{ steps.validate.outputs.runtime_sha256_arm64 }}
+            CIRVEL_PROXY_SHA256_AMD64=${{ steps.validate.outputs.proxy_sha256_amd64 }}
+            CIRVEL_PROXY_SHA256_ARM64=${{ steps.validate.outputs.proxy_sha256_arm64 }}
+            CIRVEL_SHIM_SHA256_AMD64=${{ steps.validate.outputs.shim_sha256_amd64 }}
+            CIRVEL_SHIM_SHA256_ARM64=${{ steps.validate.outputs.shim_sha256_arm64 }}
+          tags: |
+            ${{ env.GHCR_IMAGE }}:${{ steps.validate.outputs.release_tag }}
+            ${{ env.GHCR_IMAGE }}:latest
+            ${{ env.DOCKERHUB_IMAGE }}:${{ steps.validate.outputs.release_tag }}
+            ${{ env.DOCKERHUB_IMAGE }}:latest
+          labels: |
+            org.opencontainers.image.version=${{ needs.inputs.outputs.runtime_version }}
+            org.opencontainers.image.revision=${{ steps.validate.outputs.source_commit }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
+
+      - name: Summarize published tags
+        run: |
+          {
+            echo "Published: ${{ env.GHCR_IMAGE }}:${{ steps.validate.outputs.release_tag }}"
+            echo "Published: ${{ env.GHCR_IMAGE }}:latest"
+            echo "Published: ${{ env.DOCKERHUB_IMAGE }}:${{ steps.validate.outputs.release_tag }}"
+            echo "Published: ${{ env.DOCKERHUB_IMAGE }}:latest"
+          } >> "${GITHUB_STEP_SUMMARY}"
