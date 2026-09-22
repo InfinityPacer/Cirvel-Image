@@ -38,7 +38,7 @@ env:
 
 jobs:
   inputs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
       source_repository: ${{ steps.resolve.outputs.source_repository }}
@@ -108,7 +108,7 @@ jobs:
 
   release:
     needs: inputs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
