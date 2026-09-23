@@ -44,11 +44,6 @@ Plex 原本不认识 `.strm`：要么识别不了媒体信息，要么由服务�
 | 可视化配置 | Plex 设置页内的独立条目，保存即生效 |
 | 诊断 | 独立日志，容器健康检查覆盖 Plex 与 Cirvel |
 
-## 实现
-
-运行时以 **Rust** 编写，配套的播放决策组件为 **Go**，与 Plex 加载相关的一小部分为
-**C**。三者都以编译后的原生二进制随镜像交付；本仓库只做打包与发布，不含源码。
-
 ## 部署
 
 沿用 LinuxServer Plex 的既有方式即可：同样的 `/config`、同样的 `32400:32400`、
@@ -95,6 +90,34 @@ tag 只表示 Cirvel 自己的版本（`0.1.0`、`latest`），与 Plex 的版�
 ## 支持范围
 
 `linux/amd64` 与 `linux/arm64`。源码不在本仓库；这里只做镜像打包与发布。
+
+## 使用须知
+
+- **合法的 Plex 与媒体来源**：Cirvel 只适用于合法安装和使用 Plex Media Server 的用户。
+  Cirvel 不提供、不索引、不分发任何影音内容；STRM 指向什么由你决定，你应确保对所
+  访问的媒体及其存储服务拥有相应权利，并遵守该存储服务的使用条款与访问频率限制。
+- **功能边界**：Cirvel 不绕过 Plex 的账号、授权、Plex Pass 或任何数字版权保护机制，
+  需要 Plex Pass 的功能仍按 Plex 的规则提供。
+- **Plex 与其它第三方组件**：镜像中的 Plex Media Server 随 LinuxServer 基础镜像一并
+  提供，Cirvel 不对其另行授权，使用受 Plex 服务条款约束；基础镜像与 FFmpeg 等组件
+  适用各自的许可，见下文。
+- **数据**：Cirvel 会把媒体信息写入 Plex 的媒体库数据库。首次部署或升级前，请备份
+  `/config`。
+
+## 免责声明
+
+本镜像按「现状」提供。在适用法律允许的最大范围内，开发者不对使用或无法使用本镜像
+造成的任何直接或间接后果承担责任，包括但不限于数据丢失、服务中断、存储服务的访问
+限制或封禁，以及因媒体内容产生的法律纠纷。你对自己的部署方式、媒体来源及其合规性
+负责。
+
+## 第三方组件
+
+镜像中的 `/opt/cirvel/ffmpeg/bin/ffprobe` 由未经修改的 [FFmpeg 6.1.2](https://ffmpeg.org/releases/ffmpeg-6.1.2.tar.xz)
+源码构建，按 LGPL-2.1-or-later 发布，构建配置可用它的 `-version` 参数查看。
+
+基础镜像来自 [LinuxServer.io](https://github.com/linuxserver/docker-plex)，其构建脚本按
+GPL-3.0 发布；其中的 Plex Media Server 归 Plex, Inc. 所有，见下节。
 
 ## 商标与归属
 
