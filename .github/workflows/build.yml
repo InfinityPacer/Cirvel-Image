@@ -45,6 +45,7 @@ jobs:
       source_run_id: ${{ steps.resolve.outputs.source_run_id }}
       runtime_version: ${{ steps.resolve.outputs.runtime_version }}
       base_image: ${{ steps.resolve.outputs.base_image }}
+      overwrite: ${{ steps.resolve.outputs.overwrite }}
       source_commit: ${{ steps.source.outputs.head_sha }}
     steps:
       - uses: actions/checkout@v7
@@ -57,9 +58,11 @@ jobs:
           EVENT_SOURCE_RUN_ID: ${{ github.event.client_payload.source_run_id }}
           EVENT_RUNTIME_VERSION: ${{ github.event.client_payload.runtime_version }}
           EVENT_BASE_IMAGE: ${{ github.event.client_payload.base_image }}
+          EVENT_OVERWRITE: ${{ github.event.client_payload.overwrite }}
           MANUAL_SOURCE_RUN_ID: ${{ inputs.source_run_id }}
           MANUAL_RUNTIME_VERSION: ${{ inputs.runtime_version }}
           MANUAL_BASE_IMAGE: ${{ inputs.base_image }}
+          MANUAL_OVERWRITE: ${{ inputs.overwrite }}
         run: |
           set -euo pipefail
 
@@ -71,6 +74,10 @@ jobs:
           source_run_id="${EVENT_SOURCE_RUN_ID:-${MANUAL_SOURCE_RUN_ID}}"
           runtime_version="${EVENT_RUNTIME_VERSION:-${MANUAL_RUNTIME_VERSION}}"
           base_image="${EVENT_BASE_IMAGE:-${MANUAL_BASE_IMAGE}}"
+          overwrite=false
+          if [[ "${EVENT_OVERWRITE}" == "true" || "${MANUAL_OVERWRITE}" == "true" ]]; then
+            overwrite=true
+          fi
 
           [[ "${source_repository,,}" == "${SOURCE_REPOSITORY,,}" ]] || {
             echo "source repository is not the approved source repository" >&2
@@ -94,6 +101,7 @@ jobs:
             printf 'source_run_id=%s\n' "${source_run_id}"
             printf 'runtime_version=%s\n' "${runtime_version}"
             printf 'base_image=%s\n' "${base_image}"
+            printf 'overwrite=%s\n' "${overwrite}"
           } >> "${GITHUB_OUTPUT}"
 
       - name: Verify the private source workflow run
@@ -176,7 +184,7 @@ jobs:
           password: ${{ github.token }}
 
       - name: Refuse to overwrite a published tag
-        if: ${{ !inputs.overwrite }}
+        if: needs.inputs.outputs.overwrite != 'true'
         env:
           RELEASE_TAG: ${{ steps.validate.outputs.release_tag }}
         run: |
@@ -187,6 +195,19 @@ jobs:
               echo "bump VERSION in the source repository, or re-run this workflow with overwrite enabled" >&2
               exit 1
             fi
+          done
+
+      - name: Record the image being replaced
+        id: replaced
+        if: needs.inputs.outputs.overwrite == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.validate.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          for entry in "ghcr=${GHCR_IMAGE}" "dockerhub=${DOCKERHUB_IMAGE}"; do
+            digests="$(docker buildx imagetools inspect "${entry#*=}:${RELEASE_TAG}" --format '{{json .Manifest}}' 2>/dev/null \
+              | jq -r '[.digest] + [.manifests[]?.digest] | join(" ")' || true)"
+            printf '%s=%s\n' "${entry%%=*}" "${digests}" >> "${GITHUB_OUTPUT}"
           done
 
       - name: Build and publish version and latest tags
@@ -224,6 +245,27 @@ jobs:
           cache-to: type=gha,mode=max
         env:
           DOCKER_BUILD_RECORD_UPLOAD: false
+
+      - name: Delete the replaced image from GHCR
+        if: needs.inputs.outputs.overwrite == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.validate.outputs.release_tag }}
+          REPLACED: ${{ steps.replaced.outputs.ghcr }}
+        run: |
+          read -ra replaced <<< "${REPLACED}"
+          ./.github/scripts/prune-replaced.sh ghcr "${GHCR_IMAGE}" "${RELEASE_TAG}" "${replaced[@]}"
+
+      - name: Delete the replaced image from Docker Hub
+        if: needs.inputs.outputs.overwrite == 'true'
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.validate.outputs.release_tag }}
+          REPLACED: ${{ steps.replaced.outputs.dockerhub }}
+        run: |
+          read -ra replaced <<< "${REPLACED}"
+          ./.github/scripts/prune-replaced.sh dockerhub "${DOCKERHUB_IMAGE}" "${RELEASE_TAG}" "${replaced[@]}"
 
       - name: Summarize published tags
         run: |
