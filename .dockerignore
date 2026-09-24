@@ -1,0 +1,8 @@
+.git
+.github
+.release
+runtime/*.sha256
+runtime/*.tar.gz
+README*
+*.log
+*.trace
