@@ -1,16 +1,18 @@
 # Cirvel
 
-增强版 Plex，补齐 Plex 自身欠缺的能力。当前提供原生 STRM 支持：**播放由客户端直接连接 CDN 完成，NAS 既不承担上传带宽，也不承担转码开销。**
+为你的媒体库而生。
 
-这是一台普通的 Plex——基于 LinuxServer Plex 镜像，加入 Cirvel 运行时。
-客户端、遥控、共享与 plex.tv 的行为都不变。
+STRM 即本地，完整媒体信息，直连播放，零转码。
+
+适用于 Plex Media Server，基于 LinuxServer 镜像构建，客户端、遥控、共享与 plex.tv
+的行为都不变。
 
 ```sh
 docker pull ghcr.io/infinitypacer/cirvel:latest
 docker pull infinitypacer/cirvel:latest
 ```
 
-也可以指定版本：
+也可以指定版本。
 
 ```sh
 docker pull ghcr.io/infinitypacer/cirvel:0.1.0
@@ -21,8 +23,8 @@ docker pull infinitypacer/cirvel:0.1.0
 
 ## 它做什么
 
-Plex 原本不认识 `.strm`：要么识别不了媒体信息，要么由服务器下载整个文件再转码
-推给客户端——NAS 的上行带宽与 CPU 全部被占住。Cirvel 改变这两件事：
+Plex 原本不认识 `.strm`，要么识别不了媒体信息，要么由服务器下载整个文件再转码
+推给客户端，NAS 的上行带宽与 CPU 全部被占住。Cirvel 改变这两件事。
 
 - **媒体信息**：直接探测 STRM 指向的远端媒体，把时长、分辨率、编码、音轨与字幕
   写进 Plex 的媒体库，条目在界面上与本地媒体无异。
@@ -46,7 +48,7 @@ Plex 原本不认识 `.strm`：要么识别不了媒体信息，要么由服务�
 
 ## 免费版与 Pro
 
-STRM 播放本身永久免费；Pro 让整个媒体库提前准备好，并提供更多高级能力。
+STRM 播放本身永久免费，Pro 让整个媒体库提前准备好，并提供更多高级能力。
 
 ### 功能对比
 
@@ -61,7 +63,7 @@ STRM 播放本身永久免费；Pro 让整个媒体库提前准备好，并提�
 | **批量分析**：在 Plex 中分析整季、整部剧或整个媒体库 | — | ✅ |
 | **远端校验**：定期确认远端文件没有变化，变了自动重新分析 | — | ✅ |
 | **本地复用**：已有同名本地文件时直接复用它的媒体信息，不访问云盘 | — | ✅ |
-| **服务端读取**：浏览器等不能直连的客户端可由服务器转码播放 STRM；支持片头片尾检测 | — | ✅ |
+| **服务端读取**：浏览器等不能直连的客户端可由服务器转码播放 STRM，并支持片头片尾检测 | — | ✅ |
 
 设置页的「许可」区块会显示媒体库中已分析与未分析的 STRM 数量。
 
@@ -70,22 +72,22 @@ STRM 播放本身永久免费；Pro 让整个媒体库提前准备好，并提�
 - 新入库的 STRM 条目一开始没有分辨率、音轨等信息。第一次打开时读取，通常一秒左右，
   随后即可播放。
 - 在 Plex 中对整季或整个媒体库点「分析」不会批量读取，条目在被打开时逐个补上。
-- 每小时最多读取 60 个条目，正常浏览与播放用不完；超出的条目在下一次打开时再读取。
+- 每小时最多读取 60 个条目，正常浏览与播放用不完，超出的条目在下一次打开时再读取。
 - 已经读取过的信息会一直保留，Plex 刷新元数据也不会丢失。
 
 ### Pro 的实际体验
 
 - 整个媒体库在后台提前分析完成，任何客户端打开时信息都已齐全，可以按分辨率、HDR
   等条件筛选。
-- 有同名本地文件的条目不访问云盘；远端文件变化会被自动发现。
+- 有同名本地文件的条目不访问云盘，远端文件变化会被自动发现。
 - 浏览器、远程低带宽等不能直连的场景，可以开启服务器转码播放 STRM。
 
 ### 授权
 
-- 一次性购买，包含后续更新；不提供试用。
+- 一次性购买，包含后续更新，不提供试用。
 - 授权码在 Plex 设置页的 Cirvel 条目中激活，绑定服务器所属的 Plex 账号，不限服务器
   数量，绑定后不可更换账号。
-- 续期或升级时，在同一位置输入新的授权码即可替换当前授权；到期更早的授权码不会替换
+- 续期或升级时，在同一位置输入新的授权码即可替换当前授权。到期更早的授权码不会替换
   当前授权。
 - 激活后需要能定期连接许可服务续期。连续 48 小时无法连接时暂时回到免费版，恢复连接后
   自动恢复 Pro。
@@ -93,7 +95,7 @@ STRM 播放本身永久免费；Pro 让整个媒体库提前准备好，并提�
 
 ## 部署
 
-沿用 LinuxServer Plex 的既有方式即可：同样的 `/config`、同样的 `32400:32400`、
+沿用 LinuxServer Plex 的既有方式即可，同样的 `/config`、同样的 `32400:32400`、
 `host` 与 `bridge` 网络都不需要额外配置。
 
 ```yaml
@@ -120,14 +122,14 @@ services:
 ## 配置
 
 运行期可调项都在 Plex 设置页左侧「设置」分组末尾的 **Cirvel** 条目里，
-保存即生效，无需重启容器；配置随 `/config` 卷持久化。打开该页面需要 Plex
+保存即生效，无需重启容器，配置随 `/config` 卷持久化。打开该页面需要 Plex
 服务器拥有者权限，由 Plex 自身判定。
 
 ## 版本与更新
 
 tag 只表示 Cirvel 自己的版本（`0.1.0`、`latest`），与 Plex 的版本号无关。
 
-内置的 Plex 是固定的：每个版本使用一个经过验证的 Plex Media Server，**不随 Plex
+内置的 Plex 是固定的，每个版本使用一个经过验证的 Plex Media Server，**不随 Plex
 的发布自动更新**。升级 Plex 属于 Cirvel 的一次版本变更，会在发布说明里写明
 新的 Plex 版本，本页顶部的版本号也会同步。镜像的 `io.infinitypacer.cirvel.plex.version`
 标签始终记录当前内置的 Plex 版本，可用 `docker inspect` 查询。
@@ -136,17 +138,17 @@ tag 只表示 Cirvel 自己的版本（`0.1.0`、`latest`），与 Plex 的版�
 
 ## 支持范围
 
-`linux/amd64` 与 `linux/arm64`。源码不在本仓库；这里只做镜像打包与发布。
+`linux/amd64` 与 `linux/arm64`。源码不在本仓库，这里只做镜像打包与发布。
 
 ## 使用须知
 
 - **合法的 Plex 与媒体来源**：Cirvel 只适用于合法安装和使用 Plex Media Server 的用户。
-  Cirvel 不提供、不索引、不分发任何影音内容；STRM 指向什么由你决定，你应确保对所
+  Cirvel 不提供、不索引、不分发任何影音内容。STRM 指向什么由你决定，你应确保对所
   访问的媒体及其存储服务拥有相应权利，并遵守该存储服务的使用条款与访问频率限制。
 - **功能边界**：Cirvel 不绕过 Plex 的账号、授权、Plex Pass 或任何数字版权保护机制，
   需要 Plex Pass 的功能仍按 Plex 的规则提供。
 - **Plex 与其它第三方组件**：镜像中的 Plex Media Server 随 LinuxServer 基础镜像一并
-  提供，Cirvel 不对其另行授权，使用受 Plex 服务条款约束；基础镜像与 FFmpeg 等组件
+  提供，Cirvel 不对其另行授权，使用受 Plex 服务条款约束。基础镜像与 FFmpeg 等组件
   适用各自的许可，见下文。
 - **数据**：Cirvel 会把媒体信息写入 Plex 的媒体库数据库。首次部署或升级前，请备份
   `/config`。
@@ -164,7 +166,7 @@ tag 只表示 Cirvel 自己的版本（`0.1.0`、`latest`），与 Plex 的版�
 源码构建，按 LGPL-2.1-or-later 发布，构建配置可用它的 `-version` 参数查看。
 
 基础镜像来自 [LinuxServer.io](https://github.com/linuxserver/docker-plex)，其构建脚本按
-GPL-3.0 发布；其中的 Plex Media Server 归 Plex, Inc. 所有，见下节。
+GPL-3.0 发布，其中的 Plex Media Server 归 Plex, Inc. 所有，见下节。
 
 ## 商标与归属
 
@@ -173,5 +175,5 @@ Plex、Plex Media Server 及 Plex 标志是 Plex, Inc. 的商标。Cirvel 是独
 
 本镜像基于 [LinuxServer.io](https://docs.linuxserver.io/images/docker-plex/) 的 Plex
 镜像构建，其中的 Plex Media Server 由 Plex, Inc. 提供，使用受
-[Plex 服务条款](https://www.plex.tv/about/privacy-legal/plex-terms-of-service/) 约束；
+[Plex 服务条款](https://www.plex.tv/about/privacy-legal/plex-terms-of-service/) 约束。
 是否领取服务器、是否使用 Plex Pass 等均由你与 Plex 之间的关系决定，与本项目无关。
