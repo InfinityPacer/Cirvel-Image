@@ -1,6 +1,6 @@
 # Cirvel
 
-让 Plex 原生支持 STRM：**播放由客户端直接连接 CDN 完成，NAS 既不承担上传带宽，也不承担转码开销。**
+增强版 Plex，补齐 Plex 自身欠缺的能力。当前提供原生 STRM 支持：**播放由客户端直接连接 CDN 完成，NAS 既不承担上传带宽，也不承担转码开销。**
 
 这是一台普通的 Plex——基于 LinuxServer Plex 镜像，加入 Cirvel 运行时。
 客户端、遥控、共享与 plex.tv 的行为都不变。
