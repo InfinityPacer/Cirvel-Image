@@ -1,4 +1,11 @@
-# Cirvel
+<h1>
+  <a href="https://cirvel.tidewren.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/cirvel-lockup-light.svg">
+      <img src=".github/assets/cirvel-lockup-dark.svg" alt="Cirvel" height="48">
+    </picture>
+  </a>
+</h1>
 
 为你的媒体库而生，STRM 即本地。
 
