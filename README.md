@@ -23,6 +23,8 @@ docker pull tidewren/cirvel:latest
 
 功能介绍、免费版与 Pro 的对比、购买与激活方式，见官网 [cirvel.tidewren.com](https://cirvel.tidewren.com)。
 
+版本更新与公告发布在 Telegram 频道 [@cirvel_news](https://t.me/cirvel_news)。使用中遇到问题或有功能建议，请在本仓库提交 [issue](https://github.com/tidewren/Cirvel-Image/issues/new/choose)。
+
 ## 部署
 
 已经在用 Plex 的，把原来 compose 里的 `image` 换成 `tidewren/cirvel:latest` 即可。
