@@ -15,12 +15,6 @@
 docker pull tidewren/cirvel:latest
 ```
 
-也可以指定版本。
-
-```sh
-docker pull tidewren/cirvel:0.1.4
-```
-
 同一镜像也发布在 GitHub Container Registry，地址为 `ghcr.io/tidewren/cirvel`。
 
 **本版本内置 Plex Media Server 1.43.4.10903。**
@@ -74,7 +68,7 @@ Cirvel 默认每天发送一次使用统计，包括版本、媒体库规模与�
 
 ## 版本与更新
 
-tag 只表示 Cirvel 自己的版本（`0.1.4`、`latest`），与 Plex 的版本号无关。
+tag 只表示 Cirvel 自己的版本号与 `latest`，与 Plex 的版本号无关。
 
 内置的 Plex 是固定的，每个版本使用一个经过验证的 Plex Media Server，**不随 Plex
 的发布自动更新**。升级 Plex 属于 Cirvel 的一次版本变更，会在发布说明里写明
