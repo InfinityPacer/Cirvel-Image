@@ -31,10 +31,9 @@ docker pull tidewren/cirvel:0.1.4
 
 ## 部署
 
-已经在用 LinuxServer Plex 的，在原来的 compose 里只把 `image` 换成
-`tidewren/cirvel:latest`。`/config`、媒体挂载、`devices` 与环境变量都保持原样，
-原来的服务器、媒体库与观看记录会直接沿用。`host` 与 `bridge` 网络都不需要额外配置。
-从 Plex 官方镜像迁移时，原有的 `PLEX_UID`、`PLEX_GID` 按 `PUID`、`PGID` 生效，无需改写。
+已经在用 Plex 的，把原来 compose 里的 `image` 换成 `tidewren/cirvel:latest` 即可。
+`/config`、媒体挂载、`devices` 与环境变量都不用动，服务器、媒体库与观看记录会原样保留。
+`host` 与 `bridge` 网络都不需要额外配置。
 
 `/config` 一定要指向原来的目录。换成新的空目录，得到的是一台尚未登录的新服务器。
 
