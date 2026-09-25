@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Telegram 频道
+    url: https://t.me/cirvel_news
+    about: 版本更新与公告。
+  - name: 授权与购买
+    url: mailto:support@tidewren.com
+    about: 授权码、购买与退款相关的问题请发邮件到 support@tidewren.com，不要在公开 issue 里贴授权码。

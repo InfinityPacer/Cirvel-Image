@@ -1,0 +1,68 @@
+name: 问题反馈
+description: 部署、播放、分析或管理面板出现问题
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请先看一下 [常见问题](https://cirvel.tidewren.com/#faq) 与 [发布记录](https://cirvel.tidewren.com/changelog/)，问题可能已经在新版本中解决。
+  - type: input
+    id: version
+    attributes:
+      label: Cirvel 版本
+      description: 管理面板底部或帮助菜单里显示的版本号，也可以看容器日志开头
+      placeholder: 例如 0.1.5
+    validations:
+      required: true
+  - type: dropdown
+    id: origin
+    attributes:
+      label: 部署方式
+      description: 换成 Cirvel 之前用的是哪种 Plex 镜像
+      options:
+        - 从官方镜像 plexinc/pms-docker 替换
+        - 从 LinuxServer 镜像 linuxserver/plex 替换
+        - 从其他 Plex 镜像替换
+        - 全新部署
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: NAS 或系统
+      description: 设备型号或系统版本，以及 Docker 的网络模式
+      placeholder: 例如 群晖 DS920+ DSM 7.2，bridge 网络
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 问题现象
+      description: 发生了什么，你期望的结果是什么
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 按什么步骤操作会出现这个问题
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: compose
+    attributes:
+      label: compose 配置
+      description: 去掉 PLEX_CLAIM 等敏感值后再贴
+      render: yaml
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志
+      description: |
+        容器日志，或 Plex 日志目录下的 Cirvel.log 相关片段。
+        贴出前请去掉 Plex token（X-Plex-Token）、带签名参数的链接与媒体路径。
+      render: text

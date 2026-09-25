@@ -1,0 +1,23 @@
+name: 功能建议
+description: 希望 Cirvel 增加或改进的能力
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 使用场景
+      description: 你在什么情况下需要这个能力，现在是怎么处理的
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 期望的效果
+      description: 希望 Cirvel 怎么做
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 补充信息
+      description: 截图、参考的产品或其他说明
