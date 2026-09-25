@@ -18,7 +18,7 @@ docker pull tidewren/cirvel:latest
 也可以指定版本。
 
 ```sh
-docker pull tidewren/cirvel:0.1.2
+docker pull tidewren/cirvel:0.1.3
 ```
 
 同一镜像也发布在 GitHub Container Registry，地址为 `ghcr.io/tidewren/cirvel`。
@@ -63,13 +63,18 @@ XML，那是 Plex 的接口返回，不是出错。
 
 ## 配置
 
-运行期可调项都在 Plex 设置页左侧「设置」分组末尾的 **Cirvel** 条目里，
-保存即生效，无需重启容器，配置随 `/config` 卷持久化。打开该页面需要 Plex
+分析状态、运行期可调项与授权都在 Cirvel 管理面板里。在 Plex Web 侧边栏点击
+**Cirvel** 即可在新标签页打开，也可以直接访问 `http://<服务器地址>:32400/cirvel/`。
+设置保存即生效，无需重启容器，配置随 `/config` 卷持久化。打开面板需要 Plex
 服务器拥有者权限，由 Plex 自身判定。
+
+Cirvel 默认每天发送一次使用统计，包括版本、媒体库规模与功能使用次数，不含媒体
+名称、路径与链接，详见[隐私政策](https://cirvel.tidewren.com/privacy/)。可以在
+管理面板的设置页关闭，也可以在 `environment` 中加入 `CIRVEL_TELEMETRY=0`。
 
 ## 版本与更新
 
-tag 只表示 Cirvel 自己的版本（`0.1.2`、`latest`），与 Plex 的版本号无关。
+tag 只表示 Cirvel 自己的版本（`0.1.3`、`latest`），与 Plex 的版本号无关。
 
 内置的 Plex 是固定的，每个版本使用一个经过验证的 Plex Media Server，**不随 Plex
 的发布自动更新**。升级 Plex 属于 Cirvel 的一次版本变更，会在发布说明里写明
