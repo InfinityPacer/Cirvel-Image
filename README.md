@@ -108,6 +108,9 @@ tag 只表示 Cirvel 自己的版本号与 `latest`，与 Plex 的版本号无�
 镜像中的 `/opt/cirvel/ffmpeg/bin/ffprobe` 由未经修改的 [FFmpeg 6.1.2](https://ffmpeg.org/releases/ffmpeg-6.1.2.tar.xz)
 源码构建，按 LGPL-2.1-or-later 发布，构建配置可用它的 `-version` 参数查看。
 
+Cirvel 程序内含 [OpenCC](https://github.com/BYVoid/OpenCC) 的繁简字表，按 Apache-2.0 发布，声明见
+本仓的 `THIRD_PARTY_NOTICES.md`，镜像内位于 `/usr/share/doc/cirvel/THIRD_PARTY_NOTICES.md`。
+
 基础镜像来自 [LinuxServer.io](https://github.com/linuxserver/docker-plex)，其构建脚本按
 GPL-3.0 发布，其中的 Plex Media Server 归 Plex, Inc. 所有，见下节。
 

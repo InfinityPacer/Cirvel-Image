@@ -46,6 +46,7 @@ COPY runtime/${TARGETARCH}/ffprobe /opt/cirvel/ffmpeg/bin/ffprobe
 COPY runtime/${TARGETARCH}/cirvel /usr/local/bin/cirvel
 COPY runtime/${TARGETARCH}/cirvel-proxy /usr/local/bin/cirvel-proxy
 COPY runtime/${TARGETARCH}/cirvel-bind.so /usr/local/lib/cirvel/cirvel-bind.so
+COPY THIRD_PARTY_NOTICES.md /usr/share/doc/cirvel/THIRD_PARTY_NOTICES.md
 
 RUN set -eux; \
     export CIRVEL_LOG_PATH=/tmp/cirvel-build.log; \
