@@ -85,6 +85,8 @@ tag 只表示 Cirvel 自己的版本号与 `latest`，与 Plex 的版本号无�
 
 ## 使用须知
 
+- **服务协议与隐私政策** 下载、安装或使用本镜像，即表示你同意 Cirvel 的
+  [《服务协议》](https://cirvel.tidewren.com/terms/)与[《隐私政策》](https://cirvel.tidewren.com/privacy/)。
 - **合法的 Plex 与媒体来源** Cirvel 只适用于合法安装和使用 Plex Media Server 的用户。
   Cirvel 不提供、不索引、不分发任何影音内容。STRM 指向什么由你决定，你应确保对所
   访问的媒体及其存储服务拥有相应权利，并遵守该存储服务的使用条款与访问频率限制。
